@@ -67,6 +67,7 @@ $string['deletecheckconfirm'] = 'Are you sure you want to delete the following m
 $string['duplicatemaxactivities'] = 'Maximum amount of course modules to duplicate';
 $string['duplicatemaxactivities_description'] = 'Maximum amount of course modules which can be duplicated at the same time without running the process as background task. If set to "0" all duplication operations will be run as background task.';
 $string['enablebulkediting'] = 'Enable bulk editing';
+$string['event:massaction_duplicated'] = 'Mass action duplicated';
 $string['invalidaction'] = 'Unknown action: {$a}';
 $string['invalidmoduleid'] = 'Invalid module ID: {$a}';
 $string['invalidcoursemodule'] = 'Invalid course module';
