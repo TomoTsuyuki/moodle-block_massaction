@@ -300,12 +300,12 @@ class actions {
         $sourceformat = course_get_format($sourcecourseid);
         $sourcesectionsrestricted = massactionutils::get_restricted_sections($sourcecourseid, $sourceformat->get_format());
         foreach ($idsincourseorder as $cmid) {
-          $sourcecm = $sourcemodinfo->get_cm($cmid);
+            $sourcecm = $sourcemodinfo->get_cm($cmid);
             // Not duplicated if the section is restricted.
             if (in_array($sourcecm->sectionnum, $sourcesectionsrestricted)) {
                 throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
-   
+
             try {
                 $duplicatedmod = massactionutils::duplicate_cm_to_course($targetmodinfo->get_course(),
                     $sourcemodinfo->get_cm($cmid));
