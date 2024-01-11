@@ -147,6 +147,9 @@ class actions {
         // sorted by their id:
         // Let order of mods in a section be mod1, mod2, mod3, mod4, mod5. If we duplicate mod2, mod4, the order afterwards will be
         // mod1, mod2, mod3, mod4, mod5, mod2(dup), mod4(dup).
+
+        $cms = [];
+        $errors = [];
         $duplicatedmods = [];
         $targetformat = course_get_format($courseid);
         $sectionsrestricted = massactionutils::get_restricted_sections($courseid, $targetformat->get_format());
@@ -156,7 +159,22 @@ class actions {
             if (in_array($cm->sectionnum, $sectionsrestricted)) {
                 throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
-            $duplicatedmod = duplicate_module($modinfo->get_course(), $modinfo->get_cm($cmid));
+
+            try {
+                $duplicatedmod = duplicate_module($modinfo->get_course(), $modinfo->get_cm($cmid));
+            } catch (\Exception $e) {
+                $errors[$cmid] = 'cmid:' . $cmid . '(' . $e->getMessage() . ')';
+                $event = \block_massaction\event\course_modules_duplicated_failed::create([
+                    'context' => \context_course::instance($courseid),
+                    'other' => [
+                        'cmid' => $cmid,
+                        'error' => $errors[$cmid],
+                    ],
+                ]);
+                $event->trigger();
+                continue;
+            }
+            $cms[$cmid] = $duplicatedmod->id;
             $duplicatedmods[] = $duplicatedmod;
         }
 
@@ -175,6 +193,14 @@ class actions {
             // Move each module to the end of their section.
             moveto_module($duplicatedmod, $section);
         }
+        $event = \block_massaction\event\course_modules_duplicated::create([
+            'context' => \context_course::instance($courseid),
+            'other' => [
+                'cms' => $cms,
+                'failed' => array_keys($errors),
+            ],
+        ]);
+        $event->trigger();
     }
 
     /**
@@ -270,6 +296,8 @@ class actions {
         // Let order of mods in a section be mod1, mod2, mod3, mod4, mod5. If we duplicate mod2, mod4, the order afterwards will be
         // mod1, mod2, mod3, mod4, mod5, mod2(dup), mod4(dup).
         $duplicatedmods = [];
+        $cms = [];
+        $errors = [];
         $sourceformat = course_get_format($sourcecourseid);
         $sourcesectionsrestricted = massactionutils::get_restricted_sections($sourcecourseid, $sourceformat->get_format());
         foreach ($idsincourseorder as $cmid) {
@@ -278,7 +306,23 @@ class actions {
             if (in_array($sourcecm->sectionnum, $sourcesectionsrestricted)) {
                 throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
-            $duplicatedmod = massactionutils::duplicate_cm_to_course($targetmodinfo->get_course(), $sourcecm);
+
+            try {
+                $duplicatedmod = massactionutils::duplicate_cm_to_course($targetmodinfo->get_course(),
+                    $sourcemodinfo->get_cm($cmid));
+            } catch (\Exception $e) {
+                $errors[$cmid] = 'cmid:' . $cmid . '(' . $e->getMessage() . ')';
+                $event = \block_massaction\event\course_modules_duplicated_failed::create([
+                    'context' => \context_course::instance($sourcecourseid),
+                    'other' => [
+                        'cmid' => $cmid,
+                        'error' => $errors[$cmid],
+                    ],
+                ]);
+                $event->trigger();
+                continue;
+            }
+            $cms[$cmid] = $duplicatedmod;
             $duplicatedmods[] = $duplicatedmod;
         }
 
@@ -291,6 +335,14 @@ class actions {
                 moveto_module($targetmodinfo->get_cm($modid), $targetsection);
             }
         }
+        $event = \block_massaction\event\course_modules_duplicated::create([
+            'context' => \context_course::instance($sourcecourseid),
+            'other' => [
+                'cms' => $cms,
+                'failed' => array_keys($errors),
+            ],
+        ]);
+        $event->trigger();
     }
 
     /**
