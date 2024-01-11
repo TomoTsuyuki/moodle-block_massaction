@@ -154,7 +154,7 @@ class actions {
             $cm = $modinfo->get_cm($cmid);
             // Not duplicated if the section is restricted.
             if (in_array($cm->sectionnum, $sectionsrestricted)) {
-                continue;
+                throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
             $duplicatedmod = duplicate_module($modinfo->get_course(), $modinfo->get_cm($cmid));
             $duplicatedmods[] = $duplicatedmod;
@@ -276,7 +276,7 @@ class actions {
             $sourcecm = $sourcemodinfo->get_cm($cmid);
             // Not duplicated if the section is restricted.
             if (in_array($sourcecm->sectionnum, $sourcesectionsrestricted)) {
-                continue;
+                throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
             $duplicatedmod = massactionutils::duplicate_cm_to_course($targetmodinfo->get_course(), $sourcecm);
             $duplicatedmods[] = $duplicatedmod;
@@ -526,7 +526,7 @@ class actions {
 
             // Not moving if the section is restricted.
             if (in_array($cm->sectionnum, $sectionsrestricted)) {
-                continue;
+                throw new moodle_exception('sectionrestricted', 'block_massaction');
             }
 
             // Move each module to the end of their section.
